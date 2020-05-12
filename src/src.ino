@@ -15,10 +15,29 @@
 #define CAMERA_MODEL_AI_THINKER
 
 #include "camera_pins.h"
-
-#include <WiFiManager.h>              
+            
 
 void startCameraServer();
+
+
+
+void setupConnection(const String& apName, const String& apPass, const String& selfAPName, const String& selfAPPass)
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(apName.c_str(), apPass.c_str());
+  int connRes = WiFi.waitForConnectResult();
+
+  if(WiFi.isConnected()) {
+    Serial.println("connected");
+    return;
+  }
+
+  WiFi.mode(WIFI_AP);
+
+  WiFi.softAP(selfAPName.c_str(), selfAPPass.c_str()); 
+  delay(1000);
+  Serial.println("I think we are ready");
+}
 
 void setup() {
   Serial.begin(115200);
@@ -83,27 +102,17 @@ void setup() {
   s->set_vflip(s, 1);
   s->set_hmirror(s, 1);
 #endif
-
-  startCameraServer();
-
-  Serial.print("Camera Ready! Use 'http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("' to connect");
-}
-
-void loop() {
-
   // is configuration portal requested? for wifi configuration
   // ondemand config portal can go here but then auto connect doesn't work.
 //  if (WiFi.isConnected() != WL_CONNECTED) {
 //    WiFiManager wifiManager;
 //    //reset saved settings
 //    //wifiManager.resetSettings();
-//    
+   
 //    //set custom ip for portal
 //    //wifiManager.setAPStaticIPConfig(IPAddress(10,0,1,1), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
 //    wifiManager.setPortalPort(8080);
-//
+
 //    //fetches ssid and pass from eeprom and tries to connect
 //    //if it does not connect it starts an access point with the specified name
 //    //here  "AutoConnectAP"
@@ -113,12 +122,25 @@ void loop() {
 //    wifiManager.autoConnect(ssid.c_str(), password.c_str());
 //    //or use this for auto generated name ESP + ChipID
 //    //wifiManager.autoConnect();
-//
-//    
+
+   
 //    //if you get here you have connected to the WiFi
 //    Serial.println("connected...yeey :)");
 //  }
 
+auto ssid = String("COVCAM") + String(ESP_getChipId(), HEX);
+auto password = String("netdeemak");
+
+setupConnection("uid1", "netdeemak", ssid, password);
+
+  startCameraServer();
+
+  Serial.print("Camera Ready! Use 'http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("' to connect");
+}
+
+void loop() {
   // put your main code here, to run repeatedly:
   delay(10000);
 }
